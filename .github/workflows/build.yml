@@ -24,58 +24,29 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Cache Gradle packages
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    
-    - name: Check project structure
+    - name: Fix Gradle permissions
       run: |
-        echo "=== Project Structure ==="
+        echo "Current directory: $(pwd)"
+        echo "Listing files:"
         ls -la
         echo ""
-        echo "=== App Directory ==="
-        ls -la app/ || echo "No app directory"
+        echo "Fixing gradlew permissions..."
+        chmod +x ./gradlew
+        echo "Permissions after fix:"
+        ls -la ./gradlew
         echo ""
-        echo "=== Gradle Files ==="
-        ls -la *.gradle 2>/dev/null || echo "No gradle files in root"
-        ls -la app/*.gradle 2>/dev/null || echo "No gradle files in app"
-    
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    
-    - name: Check Gradle wrapper
-      run: |
-        echo "=== Gradle Wrapper ==="
-        ls -la gradle/wrapper/
-        echo ""
-        echo "=== Java Version ==="
-        java -version
+        echo "Testing gradlew..."
+        ./gradlew --version
     
     - name: Build Debug APK
       run: |
-        echo "=== Starting Debug Build ==="
-        ./gradlew assembleDebug --stacktrace --info || {
-          echo "=== Build failed, checking for errors ==="
-          find . -name "*.log" -type f -exec cat {} \;
-          exit 1
-        }
-      continue-on-error: true
+        echo "Building APK..."
+        ./gradlew assembleDebug --stacktrace
     
-    - name: Find and list all APK files
+    - name: Check outputs
       run: |
-        echo "=== Searching for APK files ==="
-        find . -name "*.apk" -type f 2>/dev/null | head -20
-        echo ""
-        echo "=== Checking build directories ==="
-        ls -la app/build/ 2>/dev/null || echo "No app/build directory"
-        ls -la app/build/outputs/ 2>/dev/null || echo "No outputs directory"
-        ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk directory"
+        echo "Checking for APK files..."
+        find . -name "*.apk" -type f 2>/dev/null
         ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug directory"
     
     - name: Upload Debug APK
@@ -83,26 +54,6 @@ jobs:
       if: success()
       with:
         name: app-debug
-        path: |
-          **/*.apk
-        retention-days: 7
-        if-no-files-found: warn
-    
-    - name: Build Release APK
-      run: ./gradlew assembleRelease --stacktrace --info
-      continue-on-error: true
-    
-    - name: Find Release APK files
-      run: |
-        echo "=== Searching for Release APK files ==="
-        find . -name "*.apk" -type f 2>/dev/null | head -20
-    
-    - name: Upload Release APK
-      uses: actions/upload-artifact@v4
-      if: success()
-      with:
-        name: app-release
-        path: |
-          **/*.apk
+        path: app/build/outputs/apk/debug/*.apk
         retention-days: 7
         if-no-files-found: warn
