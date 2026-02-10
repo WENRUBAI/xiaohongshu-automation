@@ -24,30 +24,47 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Fix Gradle permissions
+    - name: Verify project structure
       run: |
-        echo "Current directory: $(pwd)"
-        echo "Listing files:"
+        echo "=== Verifying Project Structure ==="
+        pwd
         ls -la
         echo ""
-        echo "Fixing gradlew permissions..."
-        chmod +x ./gradlew
-        echo "Permissions after fix:"
-        ls -la ./gradlew
-        echo ""
-        echo "Testing gradlew..."
-        ./gradlew --version
+        echo "=== Checking for critical files ==="
+        test -f gradlew && echo "✓ gradlew exists" || echo "✗ gradlew missing"
+        test -f settings.gradle && echo "✓ settings.gradle exists" || echo "✗ settings.gradle missing"
+        test -f build.gradle && echo "✓ build.gradle exists" || echo "✗ build.gradle missing"
+        test -f app/build.gradle && echo "✓ app/build.gradle exists" || echo "✗ app/build.gradle missing"
+        test -d app/src/main && echo "✓ app/src/main exists" || echo "✗ app/src/main missing"
+    
+    - name: Grant execute permission for gradlew
+      run: |
+        echo "=== Granting execute permission to gradlew ==="
+        chmod +x gradlew
+        ls -la gradlew
     
     - name: Build Debug APK
       run: |
-        echo "Building APK..."
-        ./gradlew assembleDebug --stacktrace
+        echo "=== Starting Gradle Build ==="
+        ./gradlew --version
+        echo ""
+        echo "=== Running assembleDebug ==="
+        ./gradlew assembleDebug --stacktrace || {
+          echo "ERROR: Gradle build failed"
+          exit 1
+        }
     
-    - name: Check outputs
+    - name: Verify build outputs
       run: |
-        echo "Checking for APK files..."
-        find . -name "*.apk" -type f 2>/dev/null
-        ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug directory"
+        echo "=== Verifying Build Outputs ==="
+        if [ -d "app/build/outputs/apk/debug" ]; then
+          echo "✓ Debug output directory exists"
+          ls -la app/build/outputs/apk/debug/
+        else
+          echo "✗ Debug output directory missing"
+          echo "Contents of app/build/:"
+          find app/build -type d 2>/dev/null | head -20
+        fi
     
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
