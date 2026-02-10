@@ -10,6 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
     - name: Checkout code
@@ -24,31 +25,35 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Debug and Build
+    - name: Build APK
       shell: bash
       run: |
-        set -x  # Enable debug mode
-        echo "=== Current Directory ==="
-        pwd
-        ls -la
-        
-        echo ""
-        echo "=== Fix Permissions ==="
+        echo "=== Setup ==="
         chmod +x gradlew
-        ls -la gradlew
         
         echo ""
-        echo "=== Test Gradle ==="
-        ./gradlew --version 2>&1 || echo "Gradle version check failed with code: $?"
+        echo "=== Gradle Version ==="
+        ./gradlew --version
         
         echo ""
-        echo "=== Build APK ==="
-        ./gradlew assembleDebug --stacktrace --info 2>&1 || echo "Build failed with code: $?"
+        echo "=== Starting Build ==="
+        ./gradlew assembleDebug --stacktrace --info | tee build.log
         
         echo ""
-        echo "=== Check Results ==="
+        echo "=== Build Completed ==="
+        echo "Exit code: ${PIPESTATUS[0]}"
+    
+    - name: Find APK files
+      run: |
+        echo "=== Searching for APK files ==="
         find . -name "*.apk" -type f 2>/dev/null
-        ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug output directory"
+        
+        echo ""
+        echo "=== Build directory structure ==="
+        ls -la app/build/ 2>/dev/null || echo "No build directory"
+        ls -la app/build/outputs/ 2>/dev/null || echo "No outputs directory"
+        ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk directory"
+        ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug directory"
     
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
@@ -58,3 +63,11 @@ jobs:
         path: app/build/outputs/apk/debug/*.apk
         retention-days: 7
         if-no-files-found: warn
+    
+    - name: Upload build logs
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: build-logs
+        path: build.log
+        retention-days: 7
