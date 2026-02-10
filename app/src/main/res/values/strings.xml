@@ -1,0 +1,56 @@
+<resources>
+    <string name="app_name">小红书养号助手</string>
+    <string name="title_account_management">账号管理</string>
+    <string name="title_behavior_config">行为配置</string>
+    <string name="title_task_status">任务状态</string>
+    <string name="accessibility_service_description">小红书养号助手需要无障碍权限来实现自动化操作。请开启此权限以继续使用。</string>
+    
+    <!-- 主界面 -->
+    <string name="menu_account">账号管理</string>
+    <string name="menu_config">行为配置</string>
+    <string name="menu_task">任务状态</string>
+    <string name="btn_start_task">开始任务</string>
+    <string name="btn_stop_task">停止任务</string>
+    <string name="status_idle">空闲</string>
+    <string name="status_running">运行中</string>
+    <string name="status_paused">已暂停</string>
+    
+    <!-- 账号管理 -->
+    <string name="btn_add_account">添加账号</string>
+    <string name="hint_account_name">账号名称</string>
+    <string name="msg_account_added">账号添加成功</string>
+    <string name="msg_account_deleted">账号已删除</string>
+    <string name="msg_set_default">已设为默认账号</string>
+    <string name="dialog_delete_title">删除账号</string>
+    <string name="dialog_delete_message">确定要删除这个账号吗？</string>
+    
+    <!-- 行为配置 -->
+    <string name="section_browse">浏览设置</string>
+    <string name="section_interaction">互动设置</string>
+    <string name="section_tags">标签设置</string>
+    <string name="section_human">人类化行为</string>
+    <string name="label_daily_target">每日浏览目标</string>
+    <string name="label_stay_time">停留时间（秒）</string>
+    <string name="label_interaction_prob">互动概率</string>
+    <string name="label_target_tags">目标标签</string>
+    <string name="label_whitelist_tags">白名单标签</string>
+    <string name="label_bezier_scroll">贝塞尔曲线滑动</string>
+    <string name="label_random_mistakes">随机误操作</string>
+    <string name="label_reading_pause">阅读停顿</string>
+    <string name="btn_save_config">保存配置</string>
+    <string name="msg_config_saved">配置已保存</string>
+    
+    <!-- 任务状态 -->
+    <string name="label_progress">任务进度</string>
+    <string name="label_elapsed_time">运行时间</string>
+    <string name="label_current_action">当前操作</string>
+    <string name="label_today_stats">今日统计</string>
+    <string name="format_progress">%1$d / %2$d 篇</string>
+    
+    <!-- 提示信息 -->
+    <string name="error_no_account">请先添加账号</string>
+    <string name="error_no_accessibility">请开启无障碍服务权限</string>
+    <string name="error_xhs_not_login">请确保小红书已登录</string>
+    <string name="msg_task_completed">任务已完成</string>
+    <string name="msg_task_stopped">任务已停止</string>
+</resources>
