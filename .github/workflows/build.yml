@@ -24,25 +24,31 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Fix permissions and build
+    - name: Debug and Build
+      shell: bash
       run: |
-        echo "Current directory: $(pwd)"
+        set -x  # Enable debug mode
+        echo "=== Current Directory ==="
+        pwd
         ls -la
+        
         echo ""
-        echo "Fixing gradlew permissions..."
+        echo "=== Fix Permissions ==="
         chmod +x gradlew
-        echo "Permissions fixed"
         ls -la gradlew
+        
         echo ""
-        echo "Testing gradlew..."
-        ./gradlew --version || echo "gradlew --version failed"
+        echo "=== Test Gradle ==="
+        ./gradlew --version 2>&1 || echo "Gradle version check failed with code: $?"
+        
         echo ""
-        echo "Building APK..."
-        ./gradlew assembleDebug --stacktrace --info || echo "Build failed"
+        echo "=== Build APK ==="
+        ./gradlew assembleDebug --stacktrace --info 2>&1 || echo "Build failed with code: $?"
+        
         echo ""
-        echo "Checking outputs..."
-        find . -name "*.apk" -type f 2>/dev/null || echo "No APK files found"
-        ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug directory"
+        echo "=== Check Results ==="
+        find . -name "*.apk" -type f 2>/dev/null
+        ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug output directory"
     
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
