@@ -24,85 +24,53 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Cache Gradle packages
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.gradle/caches
-          ~/.gradle/wrapper
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    
-    - name: Check project structure
+    - name: Verify project structure
       run: |
-        echo "=== Project Structure ==="
+        echo "=== Verifying Project Structure ==="
+        pwd
         ls -la
         echo ""
-        echo "=== App Directory ==="
-        ls -la app/ || echo "No app directory"
-        echo ""
-        echo "=== Gradle Files ==="
-        ls -la *.gradle 2>/dev/null || echo "No gradle files in root"
-        ls -la app/*.gradle 2>/dev/null || echo "No gradle files in app"
+        echo "=== Checking for critical files ==="
+        test -f gradlew && echo "✓ gradlew exists" || echo "✗ gradlew missing"
+        test -f settings.gradle && echo "✓ settings.gradle exists" || echo "✗ settings.gradle missing"
+        test -f build.gradle && echo "✓ build.gradle exists" || echo "✗ build.gradle missing"
+        test -f app/build.gradle && echo "✓ app/build.gradle exists" || echo "✗ app/build.gradle missing"
+        test -d app/src/main && echo "✓ app/src/main exists" || echo "✗ app/src/main missing"
     
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    
-    - name: Check Gradle wrapper
-      run: |
-        echo "=== Gradle Wrapper ==="
-        ls -la gradle/wrapper/
-        echo ""
-        echo "=== Java Version ==="
-        java -version
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v2
+      with:
+        gradle-version: wrapper
     
     - name: Build Debug APK
       run: |
-        echo "=== Starting Debug Build ==="
-        ./gradlew assembleDebug --stacktrace --info || {
-          echo "=== Build failed, checking for errors ==="
-          find . -name "*.log" -type f -exec cat {} \;
+        echo "=== Starting Gradle Build ==="
+        ./gradlew --version
+        echo ""
+        echo "=== Running assembleDebug ==="
+        ./gradlew assembleDebug --stacktrace --scan || {
+          echo "ERROR: Gradle build failed"
           exit 1
         }
-      continue-on-error: true
+      shell: bash
     
-    - name: Find and list all APK files
+    - name: Verify build outputs
       run: |
-        echo "=== Searching for APK files ==="
-        find . -name "*.apk" -type f 2>/dev/null | head -20
-        echo ""
-        echo "=== Checking build directories ==="
-        ls -la app/build/ 2>/dev/null || echo "No app/build directory"
-        ls -la app/build/outputs/ 2>/dev/null || echo "No outputs directory"
-        ls -la app/build/outputs/apk/ 2>/dev/null || echo "No apk directory"
-        ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug directory"
+        echo "=== Verifying Build Outputs ==="
+        if [ -d "app/build/outputs/apk/debug" ]; then
+          echo "✓ Debug output directory exists"
+          ls -la app/build/outputs/apk/debug/
+        else
+          echo "✗ Debug output directory missing"
+          echo "Contents of app/build/:"
+          find app/build -type d 2>/dev/null | head -20
+        fi
     
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       if: success()
       with:
         name: app-debug
-        path: |
-          **/*.apk
+        path: app/build/outputs/apk/debug/*.apk
         retention-days: 7
-        if-no-files-found: warn
-    
-    - name: Build Release APK
-      run: ./gradlew assembleRelease --stacktrace --info
-      continue-on-error: true
-    
-    - name: Find Release APK files
-      run: |
-        echo "=== Searching for Release APK files ==="
-        find . -name "*.apk" -type f 2>/dev/null | head -20
-    
-    - name: Upload Release APK
-      uses: actions/upload-artifact@v4
-      if: success()
-      with:
-        name: app-release
-        path: |
-          **/*.apk
-        retention-days: 7
-        if-no-files-found: warn
+        if-no-files-found: error
