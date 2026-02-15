@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     
     steps:
     - name: Checkout code
@@ -25,41 +25,28 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Fix line endings and build
-      shell: bash
+    - name: Validate Gradle Wrapper
+      uses: gradle/wrapper-validation-action@v3
+    
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        gradle-version: wrapper
+    
+    - name: Build with Gradle
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        arguments: assembleDebug --stacktrace --info
+        cache-disabled: false
+    
+    - name: List build outputs
       run: |
-        echo "=== Current Directory ==="
-        pwd
-        ls -la
-        
-        echo ""
-        echo "=== Fix Line Endings ==="
-        if [ -f gradlew ]; then
-            dos2unix gradlew || true
-            chmod +x gradlew
-            echo "gradlew permissions:"
-            ls -la gradlew
-        fi
-        
-        echo ""
-        echo "=== Test Java ==="
-        java -version
-        
-        echo ""
-        echo "=== Test Gradle Directly ==="
-        if [ -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "Using gradle-wrapper.jar"
-            java -jar gradle/wrapper/gradle-wrapper.jar --version 2>&1 || echo "Direct jar failed"
-        fi
-        
-        echo ""
-        echo "=== Try Gradle Build ==="
-        ./gradlew --no-daemon assembleDebug --stacktrace 2>&1 || echo "gradlew failed"
-        
-        echo ""
-        echo "=== Check Results ==="
+        echo "=== Searching for APK ==="
         find . -name "*.apk" -type f 2>/dev/null
-        ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "No debug directory"
+        echo ""
+        echo "=== Build directory ==="
+        ls -la app/build/ 2>/dev/null || echo "No build dir"
+        ls -la app/build/outputs/ 2>/dev/null || echo "No outputs dir"
     
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
@@ -68,4 +55,4 @@ jobs:
         name: app-debug
         path: app/build/outputs/apk/debug/*.apk
         retention-days: 7
-        if-no-files-found: warn
+        if-no-files-found: error
